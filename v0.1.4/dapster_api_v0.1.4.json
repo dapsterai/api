@@ -1,0 +1,319 @@
+{
+  "info": {
+    "description": "This is the documentation for Dapster's API. You can find out more about Dapster at [https://dapster.ai](https://dapster.ai).",
+    "version": "0.1.4",
+    "title": "DapsterAPI_beta"
+  },
+  "tags": [
+    {
+      "name": "robots",
+      "description": "Accessing robot information"
+    }
+  ],
+  "paths": {
+    "/robots/getNames": {
+      "get": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Get the names of all robots on site",
+        "description": "Returns a list of robot names",
+        "operationId": "getRobotNames",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "list of robot names",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "157_235_77_99"
+              ]
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/robots/getStatus": {
+      "get": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Get status of robot by robot name.",
+        "description": "Provide the robot name returned by getNames to get robot status",
+        "operationId": "getRobotStatusByName",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Name of robot",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "found robot",
+            "schema": {
+              "$ref": "#/definitions/Robot"
+            }
+          },
+          "404": {
+            "description": "Robot not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/robots/setPickOrder": {
+      "post": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Set the pick order for a robot",
+        "operationId": "setPickOrder",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "next pick for the robot to execute",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PickOrder"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "pick order added",
+            "schema": {
+              "$ref": "#/definitions/PickOrderStatus"
+            }
+          },
+          "400": {
+            "description": "Invalid Order or order not allowed",
+            "schema": {
+              "$ref": "#/definitions/PickOrderStatus"
+            }
+          },
+          "404": {
+            "description": "Robot not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/robots/cancelOrder": {
+      "get": {
+        "tags": [
+          "robots"
+        ],
+        "summary": "Cancel the current pick order on a specific robot.",
+        "description": "Provide the robot name returned by getNames to cancel its pick order",
+        "operationId": "cancelRobotOrderByName",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Name of robot",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "found robot",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Robot"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Robot not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "api_key",
+      "in": "header"
+    }
+  },
+  "definitions": {
+    "PickOrderStatus": {
+      "type": "object",
+      "required": [
+        "completionTime",
+        "errorDetected",
+        "pickStatus",
+        "placeLocLeft",
+        "placeLocTop"
+      ],
+      "properties": {
+        "pickStatus": {
+          "type": "string",
+          "description": "Pick status",
+          "enum": [
+            "about to pick",
+            "pick failed",
+            "pick aborted",
+            "user aborted",
+            "picked",
+            "dropped",
+            "placed back",
+            "placed",
+            "completed"
+          ]
+        },
+        "placeLocLeft": {
+          "type": "number",
+          "format": "float",
+          "description": "Distance in meters from left of pallet as seen from robot"
+        },
+        "placeLocTop": {
+          "type": "number",
+          "format": "float",
+          "description": "Distance in meters from far edge of pallet as seen from robot"
+        },
+        "completionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "expected time to complete or completion time"
+        },
+        "errorDetected": {
+          "type": "string",
+          "description": "Error condition detected",
+          "enum": [
+            "none",
+            "item too heavy",
+            "item too porous",
+            "item has uneven surface",
+            "item out of reach",
+            "collision anticipated",
+            "collision detected",
+            "pallet full",
+            "incorrect place postion",
+            "item not found",
+            "unknown error"
+          ]
+        }
+      }
+    },
+    "PickOrder": {
+      "type": "object",
+      "required": [
+        "robotName"
+      ],
+      "properties": {
+        "robotName": {
+          "type": "string",
+          "example": "157_44_22_19_robot_19",
+          "description": "Name of the robot to execute this order."
+        },
+        "itemWeight": {
+          "type": "number",
+          "format": "float",
+          "description": "Weight of the item in kilograms."
+        },
+        "itemLength": {
+          "type": "number",
+          "format": "float",
+          "description": "Length of the item in meters."
+        },
+        "itemWidth": {
+          "type": "number",
+          "format": "float",
+          "description": "Width of the item in meters."
+        },
+        "itemHeight": {
+          "type": "number",
+          "format": "float",
+          "description": "Height of the item in meters."
+        },
+        "placeLocLeft": {
+          "type": "number",
+          "format": "float",
+          "description": "Distance in meters from left of pallet as seen from robot"
+        },
+        "placeLocTop": {
+          "type": "number",
+          "format": "float",
+          "description": "Distance in meters from far edge of pallet as seen from robot"
+        }
+      }
+    },
+    "Robot": {
+      "type": "object",
+      "required": [
+        "currentOrder",
+        "name",
+        "orderStatus",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "157_44_22_19_robot_19"
+        },
+        "status": {
+          "type": "string",
+          "example": "ready",
+          "description": "Status of this robot.",
+          "enum": [
+            "ready",
+            "picking",
+            "error",
+            "starting up",
+            "travelling"
+          ]
+        },
+        "currentOrder": {
+          "$ref": "#/definitions/PickOrder"
+        },
+        "orderStatus": {
+          "$ref": "#/definitions/PickOrderStatus"
+        }
+      }
+    }
+  }
+}
